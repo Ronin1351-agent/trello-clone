@@ -13,6 +13,14 @@ const BOARD_ACCESS_RECHECK_MS = 5_000;
 
 async function boardAllowed(socket: Socket, userId: string, boardId: string): Promise<boolean> {
   try {
+    // Verify the original access token again: a connected socket must not
+    // retain board subscriptions after the JWT expires.
+    const token = socket.handshake.auth.token;
+    if (typeof token !== 'string') throw new Error('Missing access token');
+    const payload = jwt.verify(token, env.JWT_SECRET);
+    if (typeof payload === 'string' || payload.sub !== userId) {
+      throw new Error('Invalid socket identity');
+    }
     await requireBoardAccess(boardId, userId, 'read');
     return socket.connected;
   } catch {
@@ -44,7 +52,10 @@ export function setupSocketIO(httpServer: HttpServer): Server {
       return next(new Error('Authentication required'));
     }
     try {
-      const payload = jwt.verify(token, env.JWT_SECRET) as { sub: string };
+      const payload = jwt.verify(token, env.JWT_SECRET);
+      if (typeof payload === 'string' || typeof payload.sub !== 'string' || !payload.sub) {
+        return next(new Error('Invalid or expired token'));
+      }
       socket.data.userId = payload.sub;
       next();
     } catch {
@@ -75,12 +86,12 @@ export function setupSocketIO(httpServer: HttpServer): Server {
 
     socket.on(WS_EVENTS.BOARD_JOIN, async (boardId: string) => {
       const generation = ++joinGeneration;
-      if (typeof boardId !== 'string' || !boardId.trim()) return;
-      if (!(await boardAllowed(socket, userId, boardId))) return;
-      if (generation !== joinGeneration || !socket.connected) return;
       for (const room of socket.rooms) {
         if (room.startsWith('board:')) socket.leave(room);
       }
+      if (typeof boardId !== 'string' || !boardId.trim()) return;
+      if (!(await boardAllowed(socket, userId, boardId))) return;
+      if (generation !== joinGeneration || !socket.connected) return;
       await socket.join(`board:${boardId}`);
       logger.info({ userId, boardId, socketId: socket.id }, 'Joined authorized board room');
     });
