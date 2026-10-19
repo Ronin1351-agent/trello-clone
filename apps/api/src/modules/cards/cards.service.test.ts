@@ -12,6 +12,7 @@ vi.mock('../../db/index.js', async () => ({
   db: {
     query: {
       cards: { findFirst: vi.fn(), findMany: vi.fn() },
+      attachments: { findFirst: vi.fn(), findMany: vi.fn() },
       columns: { findFirst: vi.fn() },
       swimlanes: { findFirst: vi.fn() },
     },
@@ -33,6 +34,7 @@ import { createCard, getCard, updateCard, moveCard, deleteCard } from './cards.s
 type MockedDb = {
   query: {
     cards: { findFirst: ReturnType<typeof vi.fn>; findMany: ReturnType<typeof vi.fn> };
+    attachments: { findFirst: ReturnType<typeof vi.fn>; findMany: ReturnType<typeof vi.fn> };
     columns: { findFirst: ReturnType<typeof vi.fn> };
     swimlanes: { findFirst: ReturnType<typeof vi.fn> };
   };
@@ -352,5 +354,29 @@ describe('deleteCard', () => {
 
     expect(requireBoardAccess).toHaveBeenCalledWith('board-1', 'user-1', 'edit');
     expect(dbMock.delete).toHaveBeenCalled();
+  });
+});
+
+describe('card image ownership', () => {
+  it('rejects an attachment that is not attached to this card', async () => {
+    dbMock.query.cards.findFirst.mockResolvedValue(mockCard);
+    dbMock.query.attachments.findFirst.mockResolvedValue(undefined);
+    await expect(updateCard('card-1', 'user-1', { coverAttachmentId: 'other-attachment' })).rejects.toMatchObject({ statusCode: 400 });
+    expect(dbMock.update).not.toHaveBeenCalled();
+  });
+  it('rejects non-raster documents as covers', async () => {
+    dbMock.query.cards.findFirst.mockResolvedValue(mockCard);
+    dbMock.query.attachments.findFirst.mockResolvedValue({ id: 'pdf', cardId: 'card-1', mimeType: 'application/pdf' });
+    await expect(updateCard('card-1', 'user-1', { coverAttachmentId: 'pdf' })).rejects.toMatchObject({ statusCode: 400 });
+    expect(dbMock.update).not.toHaveBeenCalled();
+  });
+  it('persists an owned image and resolves its URL in the update response', async () => {
+    const image = { id: 'image', cardId: 'card-1', mimeType: 'image/png', storagePath: 'attachments/image.png' };
+    dbMock.query.cards.findFirst.mockResolvedValue(mockCard);
+    dbMock.query.attachments.findFirst.mockResolvedValue(image);
+    dbMock.query.attachments.findMany.mockResolvedValue([image]);
+    dbMock.update.mockReturnValue(makeUpdateReturning([{ ...mockCard, coverAttachmentId: 'image', coverMode: 'background' }]));
+    const result = await updateCard('card-1', 'user-1', { coverAttachmentId: 'image', coverMode: 'background' });
+    expect(result).toMatchObject({ coverAttachmentId: 'image', coverMode: 'background', coverImageUrl: '/uploads/attachments/image.png' });
   });
 });

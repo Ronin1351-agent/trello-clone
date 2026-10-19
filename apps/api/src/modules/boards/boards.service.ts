@@ -1,3 +1,5 @@
+import { cardCoverUrls } from '../../lib/images.js';
+import { storageProvider } from '../../lib/storage/index.js';
 import { eq, and, asc, sql, inArray } from 'drizzle-orm';
 import { db, schema } from '../../db/index.js';
 import { AppError } from '../../middleware/error.js';
@@ -154,6 +156,7 @@ export async function getBoard(boardId: string, userId: string) {
     }
   }
 
+  const coverUrls = await cardCoverUrls(cardsResult);
   const cardSummaries = cardsResult.map((card) => ({
     id: card.id,
     columnId: card.columnId,
@@ -161,6 +164,9 @@ export async function getBoard(boardId: string, userId: string) {
     parentCardId: card.parentCardId,
     cardType: card.cardType,
     title: card.title,
+    coverAttachmentId: card.coverAttachmentId,
+    coverMode: card.coverMode,
+    coverImageUrl: card.coverAttachmentId ? coverUrls.get(card.coverAttachmentId) ?? null : null,
     position: card.position,
     dueDate: card.dueDate?.toISOString() ?? null,
     assignees: card.assignees.map((a) => ({
@@ -177,6 +183,7 @@ export async function getBoard(boardId: string, userId: string) {
 
   return {
     ...board,
+    backgroundImageUrl: board.backgroundImage ? storageProvider.getUrl(board.backgroundImage) : null,
     columns: columnsResult,
     swimlanes: swimlanesResult,
     cards: cardSummaries,

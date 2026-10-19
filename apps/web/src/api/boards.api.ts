@@ -32,3 +32,13 @@ export async function updateBoard(teamId: string, boardId: string, input: Update
 export async function deleteBoard(teamId: string, boardId: string): Promise<void> {
   await api.delete(`/teams/${teamId}/boards/${boardId}`);
 }
+
+export async function uploadBoardBackground(teamId: string, boardId: string, file: File): Promise<{ backgroundImageUrl: string | null }> {
+  const form = new FormData(); form.append('file', file);
+  const { data } = await api.post('/teams/' + teamId + '/boards/' + boardId + '/background', form);
+  return data;
+}
+export async function removeBoardBackground(teamId: string, boardId: string): Promise<{ backgroundImageUrl: string | null }> {
+  const { data } = await api.delete('/teams/' + teamId + '/boards/' + boardId + '/background');
+  return data;
+}

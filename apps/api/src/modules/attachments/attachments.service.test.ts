@@ -64,7 +64,7 @@ const mockCard = { id: 'card-1', boardId: 'board-1' };
 
 const mockFile = {
   originalname: 'test.png',
-  buffer: Buffer.from('fake image data'),
+  buffer: Buffer.from([137,80,78,71,13,10,26,10,0,0,0,0]),
   mimetype: 'image/png',
   size: 12345,
 } as Express.Multer.File;

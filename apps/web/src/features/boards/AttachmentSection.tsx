@@ -53,7 +53,7 @@ export function AttachmentSection({ boardId, cardId, attachments, canEdit, onAtt
       toast.success(t('attachment.uploaded'));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? t('attachment.uploadError');
+      const msg = err?.response?.data?.error ?? t('attachment.uploadError');
       toast.error(msg);
     } finally {
       setUploading(false);
@@ -93,6 +93,7 @@ export function AttachmentSection({ boardId, cardId, attachments, canEdit, onAtt
             <input
               ref={fileInputRef}
               type="file"
+              aria-label={t('attachment.upload')}
               className="hidden"
               onChange={handleUpload}
             />

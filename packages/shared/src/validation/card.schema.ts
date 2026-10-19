@@ -11,6 +11,8 @@ export const createCardSchema = z.object({
 });
 
 export const updateCardSchema = z.object({
+  coverAttachmentId: z.string().uuid().nullable().optional(),
+  coverMode: z.enum(['cover', 'background']).optional(),
   title: z.string().min(1).max(500).optional(),
   description: z.string().max(5000).nullable().optional(),
   cardType: z.enum(['story', 'bug', 'task']).optional(),

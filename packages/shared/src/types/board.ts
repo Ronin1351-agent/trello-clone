@@ -1,4 +1,5 @@
 export interface Board {
+  backgroundImageUrl?: string | null;
   id: string;
   teamId: string;
   name: string;

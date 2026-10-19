@@ -1,3 +1,5 @@
+import { cardCoverUrls } from '../../lib/images.js';
+import { storageProvider } from '../../lib/storage/index.js';
 import crypto from 'node:crypto';
 import { eq, and, asc, sql, inArray } from 'drizzle-orm';
 import { db, schema } from '../../db/index.js';
@@ -236,6 +238,7 @@ export async function getBoardByToken(token: string) {
     }
   }
 
+  const coverUrls = await cardCoverUrls(cardsResult);
   const cardSummaries = cardsResult.map((card) => ({
     id: card.id,
     columnId: card.columnId,
@@ -243,6 +246,9 @@ export async function getBoardByToken(token: string) {
     parentCardId: card.parentCardId,
     cardType: card.cardType,
     title: card.title,
+    coverAttachmentId: card.coverAttachmentId,
+    coverMode: card.coverMode,
+    coverImageUrl: card.coverAttachmentId ? coverUrls.get(card.coverAttachmentId) ?? null : null,
     position: card.position,
     dueDate: card.dueDate?.toISOString() ?? null,
     assignees: card.assignees.map((a) => ({
@@ -260,6 +266,7 @@ export async function getBoardByToken(token: string) {
   return {
     board: {
       ...board,
+    backgroundImageUrl: board.backgroundImage ? storageProvider.getUrl(board.backgroundImage) : null,
       createdAt: board.createdAt.toISOString(),
       updatedAt: board.updatedAt.toISOString(),
     },

@@ -295,5 +295,19 @@
     "notFound": "Tableau introuvable",
     "sharedView": "Vue partagée — {{permission}}",
     "noRealtime": "Pas de mises à jour en temps réel"
+  },
+  "appearance": {
+    "boardBackground": "Arrière-plan du tableau",
+    "removeBackground": "Retirer l’arrière-plan",
+    "cardImage": "Image / arrière-plan de la carte",
+    "cardHint": "Importez une image dans les pièces jointes, puis sélectionnez-la ici. JPEG, PNG, GIF ou WebP, 10 Mio maximum.",
+    "image": "Image",
+    "noImage": "Aucune image",
+    "display": "Affichage",
+    "cover": "Couverture",
+    "background": "Arrière-plan complet",
+    "saving": "Enregistrement…",
+    "saveError": "Impossible d’enregistrer l’image.",
+    "imageHint": "Choisissez une image JPEG, PNG, GIF ou WebP de 10 Mio maximum."
   }
 }

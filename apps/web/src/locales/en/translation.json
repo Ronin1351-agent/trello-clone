@@ -295,5 +295,19 @@
     "notFound": "Board not found",
     "sharedView": "Shared View — {{permission}}",
     "noRealtime": "No real-time updates"
+  },
+  "appearance": {
+    "boardBackground": "Board background",
+    "removeBackground": "Remove background",
+    "cardImage": "Card cover / background",
+    "cardHint": "Upload an image in Attachments, then choose it here. JPEG, PNG, GIF or WebP, up to 10 MiB.",
+    "image": "Image",
+    "noImage": "No image",
+    "display": "Display",
+    "cover": "Cover",
+    "background": "Full card background",
+    "saving": "Saving…",
+    "saveError": "Could not save the image. Please try again.",
+    "imageHint": "Choose a JPEG, PNG, GIF or WebP image up to 10 MiB."
   }
 }

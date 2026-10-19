@@ -1,3 +1,11 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* Uploaded backgrounds retain a translucent surface for readable controls in either theme. */
+.board-image-surface { min-height: calc(100vh - 56px); background-size: cover; background-position: center; background-attachment: fixed; }
+.board-image-surface[style] { background-image: linear-gradient(#ffffffad, #ffffffad), var(--board-image); }
+.dark .board-image-surface[style] { background-image: linear-gradient(#111827b3, #111827b3), var(--board-image); }
+
+.board-image-surface[style] [data-board-toolbar] { background: #fffffff0; border-radius: .75rem; padding: .625rem; }
+.dark .board-image-surface[style] [data-board-toolbar] { background: #111827f0; }

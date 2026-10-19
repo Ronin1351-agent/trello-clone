@@ -17,3 +17,6 @@ export const ALLOWED_MIME_TYPES = [
   'application/vnd.openxmlformats-officedocument.presentationml.presentation',
   'application/zip',
 ];
+
+// Decorative images exclude SVG/active content. General document attachments remain supported.
+export const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];

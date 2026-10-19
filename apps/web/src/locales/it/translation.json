@@ -295,5 +295,19 @@
     "notFound": "Bacheca non trovata",
     "sharedView": "Vista condivisa — {{permission}}",
     "noRealtime": "Nessun aggiornamento in tempo reale"
+  },
+  "appearance": {
+    "boardBackground": "Sfondo della bacheca",
+    "removeBackground": "Rimuovi sfondo",
+    "cardImage": "Copertina / sfondo della scheda",
+    "cardHint": "Carica un’immagine negli allegati e selezionala qui. JPEG, PNG, GIF o WebP, massimo 10 MiB.",
+    "image": "Immagine",
+    "noImage": "Nessuna immagine",
+    "display": "Visualizzazione",
+    "cover": "Copertina",
+    "background": "Sfondo completo",
+    "saving": "Salvataggio…",
+    "saveError": "Impossibile salvare l’immagine.",
+    "imageHint": "Scegli JPEG, PNG, GIF o WebP fino a 10 MiB."
   }
 }

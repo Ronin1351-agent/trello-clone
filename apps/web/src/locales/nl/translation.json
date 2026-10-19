@@ -295,5 +295,19 @@
     "notFound": "Bord niet gevonden",
     "sharedView": "Gedeelde weergave — {{permission}}",
     "noRealtime": "Geen realtime-updates"
+  },
+  "appearance": {
+    "boardBackground": "Bordachtergrond",
+    "removeBackground": "Achtergrond verwijderen",
+    "cardImage": "Kaartomslag / achtergrond",
+    "cardHint": "Upload een afbeelding bij Bijlagen en selecteer deze hier. JPEG, PNG, GIF of WebP, maximaal 10 MiB.",
+    "image": "Afbeelding",
+    "noImage": "Geen afbeelding",
+    "display": "Weergave",
+    "cover": "Omslag",
+    "background": "Volledige kaartachtergrond",
+    "saving": "Opslaan…",
+    "saveError": "Afbeelding opslaan mislukt.",
+    "imageHint": "Kies JPEG, PNG, GIF of WebP tot 10 MiB."
   }
 }

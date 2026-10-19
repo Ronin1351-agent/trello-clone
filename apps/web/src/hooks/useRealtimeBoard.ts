@@ -182,10 +182,11 @@ export function useRealtimeBoard(boardId: string | undefined) {
       }
     });
 
-    socket.on(WS_EVENTS.ATTACHMENT_REMOVED, (data: { cardId: string }) => {
+    socket.on(WS_EVENTS.ATTACHMENT_REMOVED, (data: { cardId: string; attachmentId: string }) => {
       const card = useBoardStore.getState().board?.cards.find((c) => c.id === data.cardId);
       if (card) {
         useBoardStore.getState().updateCard(data.cardId, {
+          ...(card.coverAttachmentId === data.attachmentId ? { coverAttachmentId: null, coverImageUrl: null } : {}),
           attachmentCount: Math.max(0, card.attachmentCount - 1),
         });
       }

@@ -1,3 +1,4 @@
+import { CardImage } from './CardImage.js';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
@@ -77,7 +78,7 @@ export function SharedBoardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="board-image-surface min-h-screen bg-gray-50 dark:bg-gray-900" style={board.backgroundImageUrl ? { '--board-image': `url(${JSON.stringify(board.backgroundImageUrl)})` } as React.CSSProperties : undefined}>
       {/* Banner */}
       <div className="bg-blue-600 text-white px-4 py-2 flex items-center gap-2 text-sm">
         <Shield size={16} />
@@ -121,7 +122,8 @@ function ReadOnlyCard({ card }: { card: CardSummary }) {
   const hasMetadata = card.commentCount > 0 || card.subtaskCount > 0 || card.parentCardId || card.dueDate || card.attachmentCount > 0;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 p-3 shadow-sm">
+    <div className="relative isolate bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 p-3 shadow-sm">
+      <CardImage url={card.coverImageUrl} mode={card.coverMode} />
       {card.labels.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-1.5">
           {card.labels.map((label) => (

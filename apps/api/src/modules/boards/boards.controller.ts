@@ -1,3 +1,5 @@
+import { setBoardBackground } from './board-background.service.js';
+import { AppError } from '../../middleware/error.js';
 import type { Response, NextFunction } from 'express';
 import type { AuthRequest } from '../../middleware/auth.js';
 import * as boardsService from './boards.service.js';
@@ -45,4 +47,12 @@ export async function deleteHandler(req: AuthRequest, res: Response, next: NextF
   } catch (err) {
     next(err);
   }
+}
+
+export async function backgroundHandler(req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    if (req.method !== 'DELETE' && !req.file) throw new AppError(400, 'No image uploaded');
+    const result = await setBoardBackground(req.params.boardId as string, req.userId!, req.file);
+    res.json(result);
+  } catch (error) { next(error); }
 }

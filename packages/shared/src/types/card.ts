@@ -1,6 +1,9 @@
 export type CardType = 'story' | 'bug' | 'task';
 
 export interface Card {
+  coverAttachmentId?: string | null;
+  coverImageUrl?: string | null;
+  coverMode?: 'cover' | 'background';
   id: string;
   boardId: string;
   columnId: string;
@@ -18,6 +21,9 @@ export interface Card {
 }
 
 export interface CardSummary {
+  coverAttachmentId?: string | null;
+  coverImageUrl?: string | null;
+  coverMode?: 'cover' | 'background';
   id: string;
   columnId: string;
   swimlaneId: string;

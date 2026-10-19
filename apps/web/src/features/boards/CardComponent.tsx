@@ -1,3 +1,4 @@
+import { CardImage } from './CardImage.js';
 import React, { useState } from 'react';
 import { useSortable } from '@dnd-kit/react/sortable';
 import type { CardSummary } from '@trello-clone/shared';
@@ -70,10 +71,11 @@ export const CardComponent = React.memo(function CardComponent({ card, index, co
       onClick={() => {
         if (!isDragging) openCard(card.id);
       }}
-      className={`relative group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 p-3 shadow-sm cursor-pointer transition-shadow hover:shadow-md ${
+      className={`relative isolate group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 p-3 shadow-sm cursor-pointer transition-shadow hover:shadow-md ${
         isDragging ? 'opacity-50 shadow-lg cursor-grabbing' : ''
       }`}
     >
+      <CardImage url={card.coverImageUrl} mode={card.coverMode} />
       {/* Move card button — always visible on mobile, hover-visible on desktop */}
       <div className="absolute top-1.5 right-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
         <MoveCardPopover

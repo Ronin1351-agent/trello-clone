@@ -1,3 +1,5 @@
+import { CardAppearance } from './CardAppearance.js';
+import { CardImage } from './CardImage.js';
 import { useEffect, useState, useCallback } from 'react';
 import { X, BookOpen, Bug, CheckSquare, Trash2, MessageSquare, Pencil, Link2, ListChecks, Calendar, Activity } from 'lucide-react';
 import type { CardDetail, CardType, Comment } from '@trello-clone/shared';
@@ -141,7 +143,8 @@ export function CardDetailModal() {
       {isLoading || !cardDetail || !board ? (
         <div className="p-8 text-center text-gray-500 dark:text-gray-400">{t('common.loading')}</div>
       ) : (
-        <div className="p-6 space-y-6">
+        <div className="relative isolate p-6 space-y-6">
+          <CardImage url={cardDetail.coverImageUrl} mode={cardDetail.coverMode} />
           {/* Header with close button */}
           <div className="flex items-start justify-between">
             <div className="flex-1 mr-4">
@@ -408,10 +411,14 @@ export function CardDetailModal() {
             attachments={cardDetail.attachments ?? []}
             canEdit={canEdit}
             onAttachmentsChange={(newAttachments) => {
-              setCardDetail({ ...cardDetail, attachments: newAttachments });
-              updateCardInStore(cardDetail.id, { attachmentCount: newAttachments.length });
+              const removedCover = !!cardDetail.coverAttachmentId && !newAttachments.some(a => a.id === cardDetail.coverAttachmentId);
+              const changes = removedCover ? { coverAttachmentId: null, coverImageUrl: null } : {};
+              setCardDetail({ ...cardDetail, ...changes, attachments: newAttachments });
+              updateCardInStore(cardDetail.id, { ...changes, attachmentCount: newAttachments.length });
             }}
           />
+
+          {canEdit && <CardAppearance key={cardDetail.id} card={cardDetail} onChange={changes => setCardDetail(current => current?.id === cardDetail.id ? { ...current, ...changes } : current)} />}
 
           {/* Activity section */}
           <div>

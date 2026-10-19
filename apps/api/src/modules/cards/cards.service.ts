@@ -1,3 +1,5 @@
+import { cardCoverUrls } from '../../lib/images.js';
+import { IMAGE_MIME_TYPES } from '@trello-clone/shared';
 import { eq, and, asc } from 'drizzle-orm';
 import { db, schema } from '../../db/index.js';
 import { AppError } from '../../middleware/error.js';
@@ -138,6 +140,7 @@ export async function getCard(cardId: string, userId: string) {
 
   return {
     ...card,
+    coverImageUrl: card.coverAttachmentId ? (await cardCoverUrls([card])).get(card.coverAttachmentId) ?? null : null,
     assignees: card.assignees.map((a) => ({
       id: a.user.id,
       displayName: a.user.displayName,
@@ -178,6 +181,11 @@ export async function updateCard(cardId: string, userId: string, input: UpdateCa
 
   await requireBoardAccess(card.boardId, userId, 'edit');
 
+  if (input.coverAttachmentId) {
+    const attachment = await db.query.attachments.findFirst({ where: and(eq(schema.attachments.id, input.coverAttachmentId), eq(schema.attachments.cardId, cardId)) });
+    if (!attachment || !IMAGE_MIME_TYPES.includes(attachment.mimeType)) throw new AppError(400, 'Cover must be an image attached to this card');
+  }
+
   // Validate parentCardId changes
   if (input.parentCardId !== undefined) {
     if (input.parentCardId !== null) {
@@ -215,7 +223,7 @@ export async function updateCard(cardId: string, userId: string, input: UpdateCa
     .where(eq(schema.cards.id, cardId))
     .returning();
 
-  return updated;
+  return { ...updated, coverImageUrl: updated.coverAttachmentId ? (await cardCoverUrls([updated])).get(updated.coverAttachmentId) ?? null : null };
 }
 
 export async function moveCard(cardId: string, userId: string, input: MoveCardInput) {

@@ -1,3 +1,4 @@
+import { BoardBackgroundControl } from './BoardBackgroundControl.js';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -379,8 +380,8 @@ export function BoardPage() {
 
   return (
     <AppLayout>
-      <div className="px-2 sm:px-4 py-2 sm:py-4">
-        <div className="flex items-center gap-2 sm:gap-4 mb-2 sm:mb-4">
+      <div className="board-image-surface px-2 sm:px-4 py-2 sm:py-4" style={board.backgroundImageUrl ? { '--board-image': `url(${JSON.stringify(board.backgroundImageUrl)})` } as React.CSSProperties : undefined}>
+        <div data-board-toolbar className="flex items-center gap-2 sm:gap-4 mb-2 sm:mb-4">
           <Link to={`/teams/${teamId}/boards`} className="text-sm text-blue-600 hover:underline">
             &larr; {t('board.backToBoards')}
           </Link>
@@ -409,8 +410,10 @@ export function BoardPage() {
           </button>
         </div>
 
+        {canEdit && teamId && <BoardBackgroundControl key={board.id} teamId={teamId} boardId={board.id} hasImage={!!board.backgroundImageUrl} />}
+
         {/* Filter bar */}
-        <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-3">
+        <div data-board-toolbar className="flex flex-wrap items-center gap-2 mb-2 sm:mb-3">
           <button
             onClick={() => {
               if (hasFilters) {

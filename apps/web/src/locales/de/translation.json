@@ -295,5 +295,19 @@
     "notFound": "Board nicht gefunden",
     "sharedView": "Geteilte Ansicht — {{permission}}",
     "noRealtime": "Kein Echtzeit-Update"
+  },
+  "appearance": {
+    "boardBackground": "Board-Hintergrund",
+    "removeBackground": "Hintergrund entfernen",
+    "cardImage": "Kartenbild / Hintergrund",
+    "cardHint": "Bild als Anhang hochladen und hier auswählen. JPEG, PNG, GIF oder WebP, bis 10 MiB.",
+    "image": "Bild",
+    "noImage": "Kein Bild",
+    "display": "Darstellung",
+    "cover": "Titelbild",
+    "background": "Ganzer Kartenhintergrund",
+    "saving": "Wird gespeichert…",
+    "saveError": "Bild konnte nicht gespeichert werden.",
+    "imageHint": "JPEG, PNG, GIF oder WebP bis 10 MiB auswählen."
   }
 }

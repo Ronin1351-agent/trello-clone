@@ -1,3 +1,4 @@
+import { validateImage } from '../../lib/images.js';
 import { eq, and } from 'drizzle-orm';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -19,7 +20,10 @@ export async function addAttachment(
   });
   if (!card || card.boardId !== boardId) throw new AppError(404, 'Card not found');
 
-  const key = `attachments/${crypto.randomUUID()}${path.extname(file.originalname)}`;
+  const extension = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.mimetype)
+    ? validateImage(file)
+    : path.extname(file.originalname);
+  const key = `attachments/${crypto.randomUUID()}${extension}`;
   await storageProvider.upload(key, file.buffer, file.mimetype);
 
   const [attachment] = await db
@@ -79,6 +83,9 @@ export async function deleteAttachment(
   userId: string,
 ) {
   await requireBoardAccess(boardId, userId, 'edit');
+
+  const card = await db.query.cards.findFirst({ where: eq(schema.cards.id, cardId) });
+  if (!card || card.boardId !== boardId) throw new AppError(404, 'Card not found');
 
   const attachment = await db.query.attachments.findFirst({
     where: and(eq(schema.attachments.id, attachmentId), eq(schema.attachments.cardId, cardId)),
