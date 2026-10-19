@@ -7,14 +7,14 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://api.example.invalid/api/$1",
+      "dest": "https://trello-api-h6j4.onrender.com/api/$1",
       "headers": {
         "Cache-Control": "private, no-store"
       }
     },
     {
       "src": "/uploads/(.*)",
-      "dest": "https://api.example.invalid/uploads/$1"
+      "dest": "https://trello-api-h6j4.onrender.com/uploads/$1"
     },
     {
       "handle": "filesystem"
