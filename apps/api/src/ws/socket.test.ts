@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('@trello-clone/shared', () => ({
   WS_EVENTS: {
@@ -14,6 +14,10 @@ vi.mock('../config/env.js', () => ({
   },
 }));
 
+vi.mock('../middleware/boardAccess.js', () => ({
+  requireBoardAccess: vi.fn(),
+}));
+
 vi.mock('pino', () => ({
   pino: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
@@ -27,7 +31,7 @@ interface MockSocketLike {
   join: ReturnType<typeof vi.fn>;
   leave: ReturnType<typeof vi.fn>;
   on: ReturnType<typeof vi.fn>;
-  _trigger: (event: string, ...args: unknown[]) => void;
+  _trigger: (event: string, ...args: unknown[]) => void | Promise<void>;
 }
 
 // Capture .use() and .on() handlers from the Socket.IO Server constructor
@@ -52,19 +56,23 @@ vi.mock('jsonwebtoken', () => ({
 }));
 
 import jwt from 'jsonwebtoken';
+import { requireBoardAccess } from '../middleware/boardAccess.js';
 import { setupSocketIO, getIO } from './socket.js';
 
-type EventHandler = (...args: unknown[]) => void;
+type EventHandler = (...args: unknown[]) => void | Promise<void>;
+const connectedSockets: MockSocketLike[] = [];
 
 function makeMockSocket(overrides: Record<string, unknown> = {}) {
   const eventHandlers: Record<string, EventHandler> = {};
-  return {
-    handshake: { auth: {} },
+  const rooms = (overrides.rooms as Set<string> | undefined) ?? new Set<string>(['socket-1']);
+  const socket = {
+    handshake: { auth: { token: 'valid-token' } },
     data: {} as { userId?: string },
     id: 'socket-1',
-    rooms: new Set<string>(['socket-1']),
-    join: vi.fn(),
-    leave: vi.fn(),
+    connected: true,
+    rooms,
+    join: vi.fn().mockImplementation((room: string) => { rooms.add(room); }),
+    leave: vi.fn().mockImplementation((room: string) => { rooms.delete(room); }),
     on: vi.fn().mockImplementation((event: string, fn: EventHandler) => {
       eventHandlers[event] = fn;
     }),
@@ -72,12 +80,23 @@ function makeMockSocket(overrides: Record<string, unknown> = {}) {
     _trigger: (event: string, ...args: unknown[]) => eventHandlers[event]?.(...args),
     ...overrides,
   };
+  connectedSockets.push(socket as MockSocketLike);
+  return socket;
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(jwt.verify).mockReset();
+  vi.mocked(jwt.verify).mockReturnValue({ sub: 'user-1' });
+  vi.mocked(requireBoardAccess).mockReset();
+  vi.mocked(requireBoardAccess).mockResolvedValue({ board: {} as never, permission: 'read' });
   capturedAuthMiddleware = null;
   capturedConnectionHandler = null;
+});
+
+afterEach(() => {
+  for (const socket of connectedSockets.splice(0)) socket._trigger('disconnect', 'test');
+  vi.useRealTimers();
 });
 
 // ---------------------------------------------------------------------------
@@ -164,15 +183,16 @@ describe('setupSocketIO connection handler', () => {
     expect(socket.join).toHaveBeenCalledWith('user:user-1');
   });
 
-  it('joins board room and leaves existing board rooms on BOARD_JOIN', () => {
+  it('joins board room and leaves existing board rooms on BOARD_JOIN', async () => {
     const socket = makeMockSocket({
       data: { userId: 'user-1' },
       rooms: new Set(['socket-1', 'user:user-1', 'board:old-board']),
     });
 
     capturedConnectionHandler!(socket);
-    socket._trigger('board:join', 'new-board');
+    await socket._trigger('board:join', 'new-board');
 
+    expect(requireBoardAccess).toHaveBeenCalledWith('new-board', 'user-1', 'read');
     expect(socket.leave).toHaveBeenCalledWith('board:old-board');
     expect(socket.join).toHaveBeenCalledWith('board:new-board');
   });
@@ -186,15 +206,82 @@ describe('setupSocketIO connection handler', () => {
     expect(socket.leave).toHaveBeenCalledWith('board:board-1');
   });
 
-  it('ignores invalid boardId on BOARD_JOIN', () => {
+  it('ignores invalid boardId on BOARD_JOIN', async () => {
     const socket = makeMockSocket({ data: { userId: 'user-1' } });
 
     capturedConnectionHandler!(socket);
-    socket._trigger('board:join', '');
-    socket._trigger('board:join', 123);
+    await socket._trigger('board:join', '');
+    await socket._trigger('board:join', 123);
 
     // join should only have been called once (for user room), not for invalid boardIds
     expect(socket.join).toHaveBeenCalledTimes(1);
     expect(socket.join).toHaveBeenCalledWith('user:user-1');
   });
+  it('denies an unauthorized user even when their JWT is valid', async () => {
+    vi.mocked(requireBoardAccess).mockRejectedValue(new Error('Not a member of this team'));
+    const socket = makeMockSocket({ data: { userId: 'user-1' } });
+    capturedConnectionHandler!(socket);
+    await socket._trigger('board:join', 'private-board');
+    expect(socket.join).not.toHaveBeenCalledWith('board:private-board');
+    expect(socket.rooms.has('board:private-board')).toBe(false);
+  });
+
+  it('fails closed if database authorization fails', async () => {
+    vi.mocked(requireBoardAccess).mockRejectedValue(new Error('database unavailable'));
+    const socket = makeMockSocket({ data: { userId: 'user-1' } });
+    capturedConnectionHandler!(socket);
+    await socket._trigger('board:join', 'board-1');
+    expect(socket.rooms.has('board:board-1')).toBe(false);
+  });
+
+  it('accepts valid user shares with read permission', async () => {
+    vi.mocked(jwt.verify).mockReturnValue({ sub: 'shared-user' });
+    const socket = makeMockSocket({ data: { userId: 'shared-user' } });
+    capturedConnectionHandler!(socket);
+    await socket._trigger('board:join', 'shared-board');
+    expect(requireBoardAccess).toHaveBeenCalledWith('shared-board', 'shared-user', 'read');
+    expect(socket.rooms.has('board:shared-board')).toBe(true);
+  });
+
+  it('does not rejoin when an explicit leave occurs while authorization is pending', async () => {
+    let approve!: (result: { board: never; permission: 'read' }) => void;
+    vi.mocked(requireBoardAccess).mockImplementation(() => new Promise((resolve) => { approve = resolve; }));
+    const socket = makeMockSocket({ data: { userId: 'user-1' } });
+    capturedConnectionHandler!(socket);
+    const pending = socket._trigger('board:join', 'board-1');
+    socket._trigger('board:leave', 'board-1');
+    approve({ board: {} as never, permission: 'read' });
+    await pending;
+    expect(socket.rooms.has('board:board-1')).toBe(false);
+  });
+
+  it('evicts an already joined socket after its board share is revoked', async () => {
+    vi.useFakeTimers();
+    const socket = makeMockSocket({ data: { userId: 'user-1' } });
+    capturedConnectionHandler!(socket);
+    await socket._trigger('board:join', 'board-1');
+    expect(socket.rooms.has('board:board-1')).toBe(true);
+    vi.mocked(requireBoardAccess).mockRejectedValue(new Error('Share revoked'));
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect(socket.rooms.has('board:board-1')).toBe(false);
+  });
+
+  it('evicts access when a previously valid JWT expires', async () => {
+    vi.useFakeTimers();
+    const socket = makeMockSocket({ data: { userId: 'user-1' } });
+    capturedConnectionHandler!(socket);
+    await socket._trigger('board:join', 'board-1');
+    vi.mocked(jwt.verify).mockImplementation(() => { throw new Error('jwt expired'); });
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect(socket.rooms.has('board:board-1')).toBe(false);
+  });
+
+  it('denies expired or malformed tokens at board join', async () => {
+    vi.mocked(jwt.verify).mockImplementation(() => { throw new Error('jwt expired'); });
+    const socket = makeMockSocket({ data: { userId: 'user-1' } });
+    capturedConnectionHandler!(socket);
+    await socket._trigger('board:join', 'board-1');
+    expect(socket.rooms.has('board:board-1')).toBe(false);
+  });
+
 });
