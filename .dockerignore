@@ -17,3 +17,7 @@ yarn-error.log*
 coverage
 .vitest
 vitest.config.ts
+
+**/uploads
+.local-pids.json
+LOCAL-INSTALLATION.txt

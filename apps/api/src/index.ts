@@ -71,8 +71,8 @@ app.use('/api/v1/boards/:boardId/cards/:cardId/attachments', attachmentRoutes);
 
 app.use(errorHandler);
 
-httpServer.listen(env.API_PORT, () => {
-  logger.info(`API server running on port ${env.API_PORT}`);
+httpServer.listen(env.PORT ?? env.API_PORT, env.API_HOST, () => {
+  logger.info(`API server running on port ${env.PORT ?? env.API_PORT}`);
 });
 
 export { app };

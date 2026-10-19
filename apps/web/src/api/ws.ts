@@ -5,7 +5,9 @@ let socket: Socket | null = null;
 
 export function getSocket(): Socket {
   if (!socket) {
-    socket = io({
+    socket = io(import.meta.env.VITE_SOCKET_URL || window.location.origin, {
+      // Connect straight to the persistent API host; keep HTTP API calls same-origin.
+      transports: ['websocket'],
       autoConnect: false,
       withCredentials: true,
       auth: () => ({

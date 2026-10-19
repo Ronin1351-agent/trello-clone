@@ -1,12 +1,6 @@
 {
   "name": "trello-clone",
   "private": true,
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "bcrypt",
-      "esbuild"
-    ]
-  },
   "scripts": {
     "dev": "pnpm -r --parallel dev",
     "build": "pnpm -r build",
@@ -23,5 +17,9 @@
     "globals": "^17.3.0",
     "prettier": "^3.8.1",
     "typescript-eslint": "^8.55.0"
+  },
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": "22.x"
   }
 }

@@ -1,0 +1,7 @@
+.env
+.env.local
+.env.*.local
+.local-pids.json
+LOCAL-INSTALLATION.txt
+**/uploads/**
+*.log

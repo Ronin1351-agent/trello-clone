@@ -7,3 +7,8 @@ dist/
 
 .claude/
 .superpowers/
+
+.env.*.local
+.local-pids.json
+uploads/
+.vercel/
